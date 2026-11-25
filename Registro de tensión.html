@@ -1,0 +1,1180 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Registro de tensión</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra de personas arriba; formulario fijo a la izquierda en pantallas anchas; a la derecha medias, gráfica, exportación e historial. En móvil, una sola columna. */
+:root {
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --bg: #EEF3F7;
+  --surface: #FFFFFF;
+  --surface-2: #F5F8FB;
+  --fg: #13202C;
+  --muted: #586A7C;
+  --line: #D5DEE7;
+  --line-strong: #B4C2D0;
+  --accent: #0B67A8;
+  --accent-fg: #FFFFFF;
+  --accent-soft: #E2EFF9;
+  --sys: #0B67A8;
+  --dia: #7A4FE0;
+  --danger: #B42318;
+  --danger-fg: #FFFFFF;
+
+  --ok-fg: #116B33;   --ok-bg: #DDF5E5;
+  --warn-fg: #8A5A00; --warn-bg: #FCEFC7;
+  --high-fg: #A8400C; --high-bg: #FFE6D3;
+  --crit-fg: #A61B1B; --crit-bg: #FCDADA;
+  --low-fg: #0B5C8A;  --low-bg: #DCEEFA;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D1620; --surface: #15212D; --surface-2: #1B2937; --fg: #E7EEF5; --muted: #92A4B6;
+    --line: #27384A; --line-strong: #3A4F66; --accent: #5FB4EC; --accent-fg: #06202F; --accent-soft: #17344A;
+    --sys: #5FB4EC; --dia: #A98BFF; --danger: #FF8E8E; --danger-fg: #2A0A0A;
+    --ok-fg: #7FDC9F; --ok-bg: #16382A; --warn-fg: #F2C45C; --warn-bg: #3B3112;
+    --high-fg: #FFA66B; --high-bg: #47240F; --crit-fg: #FF8E8E; --crit-bg: #4A1B1B;
+    --low-fg: #7CC4F0; --low-bg: #12354D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D1620; --surface: #15212D; --surface-2: #1B2937; --fg: #E7EEF5; --muted: #92A4B6;
+  --line: #27384A; --line-strong: #3A4F66; --accent: #5FB4EC; --accent-fg: #06202F; --accent-soft: #17344A;
+  --sys: #5FB4EC; --dia: #A98BFF; --danger: #FF8E8E; --danger-fg: #2A0A0A;
+  --ok-fg: #7FDC9F; --ok-bg: #16382A; --warn-fg: #F2C45C; --warn-bg: #3B3112;
+  --high-fg: #FFA66B; --high-bg: #47240F; --crit-fg: #FF8E8E; --crit-bg: #4A1B1B;
+  --low-fg: #7CC4F0; --low-bg: #12354D;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 var(--font-body);
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 1040px; margin: 0 auto; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.top { margin-bottom: 16px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+h1 { font: 700 clamp(28px, 6vw, 40px)/1.05 var(--font-display); letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+
+/* Personas */
+.people { margin: 0 0 16px; display: grid; gap: 12px; min-width: 0; }
+.people-row { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.pchips { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.pform { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+.pform .field { margin: 0; flex: 1 1 200px; }
+.pmanage { padding: 4px 16px; }
+.plist { list-style: none; margin: 0; padding: 0; }
+.prow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.prow:last-child { border-bottom: 0; }
+.prow .pn { flex: 1 1 140px; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.prow .pc { font-size: 13px; color: var(--muted); }
+.pedit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1 1 100%; }
+.pedit input { flex: 1 1 160px; width: auto; }
+
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.col-data { display: grid; gap: 16px; min-width: 0; align-content: start; }
+.col-form { min-width: 0; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .col-form { position: sticky; top: 16px; }
+}
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.panel h2 { font: 600 17px/1.2 var(--font-display); letter-spacing: -.01em; margin: 0 0 14px; }
+.panel h2.tight { margin-bottom: 4px; }
+
+/* Formulario */
+.field { display: grid; gap: 6px; margin: 0 0 14px; min-width: 0; }
+fieldset.field { border: 0; padding: 0; }
+label, legend { font: 500 13px/1.2 var(--font-body); color: var(--muted); }
+legend { padding: 0; margin-bottom: 6px; }
+input[type=date], input[type=number], input[type=text] {
+  width: 100%; min-height: 44px; padding: 8px 10px;
+  border: 1px solid var(--line-strong); border-radius: 8px;
+  background: var(--surface-2); color: var(--fg);
+  font: 500 16px var(--font-body);
+}
+input.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+input::placeholder { color: var(--muted); opacity: .7; }
+.trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 6px; }
+.trio .field { margin: 0; }
+.hint { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+
+.seg { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: var(--surface-2); }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; padding: 0 8px; cursor: pointer;
+  color: var(--fg); font: 500 14px var(--font-body);
+  border-left: 1px solid var(--line-strong);
+}
+.seg label:first-of-type { border-left: 0; }
+.seg input:checked + label { background: var(--accent); color: var(--accent-fg); }
+.seg input:focus-visible + label { outline: 2px solid var(--fg); outline-offset: -4px; }
+.seg svg { flex: none; }
+
+.btn { min-height: 46px; padding: 0 18px; border-radius: 8px; border: 1px solid transparent; font: 600 15px var(--font-body); cursor: pointer; }
+.btn-primary { background: var(--accent); color: var(--accent-fg); width: 100%; }
+.btn-primary:disabled { opacity: .55; cursor: default; }
+.btn-accent { background: var(--accent); color: var(--accent-fg); }
+.btn-ghost { background: transparent; border-color: var(--line-strong); color: var(--fg); }
+.btn-ghost:disabled { opacity: .5; cursor: default; }
+.btn-sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.btn-danger { background: var(--danger); color: var(--danger-fg); }
+.err { color: var(--danger); font-size: 14px; margin: 0 0 12px; }
+.toast { min-height: 20px; font-size: 14px; color: var(--ok-fg); margin: 10px 0 0; }
+.notice { border: 1px solid var(--line-strong); background: var(--warn-bg); color: var(--warn-fg); border-radius: 8px; padding: 10px 12px; font-size: 14px; margin: 0; }
+
+/* Medias */
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.panel-head h2 { margin: 0; }
+.sub { font-size: 13px; color: var(--muted); margin: 0; }
+.sum-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sum-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 8px; }
+.cell { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 8px; min-width: 0; }
+.cell .k { font: 500 11.5px var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.cell .v { font: 500 18px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; margin-top: 4px; }
+.cell .s { font-size: 12px; margin-top: 2px; color: var(--muted); }
+.t-ok { color: var(--ok-fg) !important; } .t-warn { color: var(--warn-fg) !important; }
+.t-high { color: var(--high-fg) !important; } .t-crit { color: var(--crit-fg) !important; } .t-low { color: var(--low-fg) !important; }
+
+/* Filtros y chips */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.fchip { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent; color: var(--fg); font: 500 14px var(--font-body); cursor: pointer; max-width: 100%; overflow-wrap: anywhere; }
+.fchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+
+/* Gráfica */
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+.sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.sw.s { background: var(--sys); } .sw.d { background: var(--dia); }
+.sw.r { background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 7px); height: 2px; }
+#chart { width: 100%; min-width: 0; }
+#chart svg { display: block; width: 100%; height: auto; }
+.grid-l { stroke: var(--line); stroke-width: 1; }
+.ref-s { stroke: var(--sys); stroke-dasharray: 4 4; opacity: .55; stroke-width: 1; }
+.ref-d { stroke: var(--dia); stroke-dasharray: 4 4; opacity: .55; stroke-width: 1; }
+.ln-s { fill: none; stroke: var(--sys); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ln-d { fill: none; stroke: var(--dia); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.pt-s { fill: var(--surface); stroke: var(--sys); stroke-width: 2; } .pt-s.last { fill: var(--sys); }
+.pt-d { fill: var(--surface); stroke: var(--dia); stroke-width: 2; } .pt-d.last { fill: var(--dia); }
+.ax { fill: var(--muted); font: 11px var(--font-mono); }
+
+/* Exportar */
+.range { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.range .field { margin: 0 0 12px; }
+.exp-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+.exp-btns .btn { flex: 1 1 200px; }
+
+/* Historial */
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.hist-head h2 { margin: 0; }
+.empty { color: var(--muted); font-size: 14px; margin: 8px 0 0; max-width: 52ch; }
+.day-h { font: 600 13px var(--font-body); color: var(--muted); margin: 16px 0 6px; letter-spacing: .02em; }
+.rows { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.row-main { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 500 13px var(--font-body); color: var(--muted); min-width: 82px; }
+.bp { font: 500 22px/1.1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.bp small { font: 400 12px var(--font-body); color: var(--muted); margin-left: 4px; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font: 600 12px/1.5 var(--font-body); }
+.p-ok { background: var(--ok-bg); color: var(--ok-fg); }
+.p-warn { background: var(--warn-bg); color: var(--warn-fg); }
+.p-high { background: var(--high-bg); color: var(--high-fg); }
+.p-crit { background: var(--crit-bg); color: var(--crit-fg); }
+.p-low { background: var(--low-bg); color: var(--low-fg); }
+.row-meta { grid-column: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; font-size: 13px; color: var(--muted); min-width: 0; }
+.tx { padding: 0 8px; border-radius: 6px; border: 1px solid var(--line-strong); overflow-wrap: anywhere; }
+.tx-yes { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 500; }
+.note { grid-column: 1; margin: 2px 0 0; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.row-act { grid-column: 2; grid-row: 1; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.hist-head .row-act { grid-column: auto; grid-row: auto; }
+.link-btn { background: none; border: 0; color: var(--muted); font: 500 13px var(--font-body); min-height: 36px; padding: 0 8px; cursor: pointer; text-decoration: underline; }
+.link-btn:hover { color: var(--danger); }
+
+.foot { margin: 20px 0 0; font-size: 13px; color: var(--muted); max-width: 72ch; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<main class="wrap">
+  <header class="top">
+    <p class="eyebrow">Registro personal · mmHg</p>
+    <h1>Tensión arterial</h1>
+  </header>
+
+  <section class="people" aria-label="Personas">
+    <div class="people-row">
+      <div class="pchips" id="pchips" role="group" aria-label="Persona activa"></div>
+      <button type="button" class="btn btn-ghost btn-sm" id="add-person" aria-expanded="false">+ Añadir persona</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="manage" aria-expanded="false">Gestionar</button>
+    </div>
+    <form class="panel pform" id="pform" hidden novalidate>
+      <div class="field">
+        <label for="pname">Nombre de la persona</label>
+        <input type="text" id="pname" maxlength="40" placeholder="Ej.: Mamá" autocomplete="off">
+      </div>
+      <button type="submit" class="btn btn-accent btn-sm">Añadir</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="pform-cancel">Cancelar</button>
+    </form>
+    <div class="panel pmanage" id="pmanage" hidden></div>
+  </section>
+
+  <div class="layout">
+    <section class="col-form" aria-label="Nueva medición">
+      <form id="f" class="panel" novalidate>
+        <h2 class="tight">Nueva medición</h2>
+        <p class="sub" id="for-person" style="margin-bottom:14px"></p>
+
+        <div class="field">
+          <label for="date">Fecha</label>
+          <input type="date" id="date" autocomplete="off">
+        </div>
+
+        <fieldset class="field">
+          <legend>Momento del día</legend>
+          <div class="seg">
+            <input type="radio" name="moment" id="mo-manana" value="manana"><label for="mo-manana" id="lb-manana">Mañana</label>
+            <input type="radio" name="moment" id="mo-tarde" value="tarde"><label for="mo-tarde" id="lb-tarde">Tarde</label>
+            <input type="radio" name="moment" id="mo-noche" value="noche"><label for="mo-noche" id="lb-noche">Noche</label>
+          </div>
+        </fieldset>
+
+        <div class="trio">
+          <div class="field"><label for="sys">Sistólica</label><input class="num" type="number" id="sys" inputmode="numeric" placeholder="120" min="60" max="250" step="1" autocomplete="off"></div>
+          <div class="field"><label for="dia">Diastólica</label><input class="num" type="number" id="dia" inputmode="numeric" placeholder="80" min="30" max="150" step="1" autocomplete="off"></div>
+          <div class="field"><label for="pulse">Pulso</label><input class="num" type="number" id="pulse" inputmode="numeric" placeholder="70" min="30" max="220" step="1" autocomplete="off"></div>
+        </div>
+        <p class="hint">Sistólica es el número alto y diastólica el bajo. El pulso va en latidos por minuto y es opcional.</p>
+
+        <fieldset class="field">
+          <legend>¿Ha tomado tratamiento?</legend>
+          <div class="seg">
+            <input type="radio" name="tx" id="tx-si" value="si"><label for="tx-si">Sí</label>
+            <input type="radio" name="tx" id="tx-no" value="no" checked><label for="tx-no">No</label>
+          </div>
+        </fieldset>
+
+        <div class="field" id="txname-wrap" hidden>
+          <label for="txname">¿Cuál? (opcional)</label>
+          <input type="text" id="txname" list="txlist" maxlength="120" placeholder="Ej.: enalapril 10 mg" autocomplete="off">
+          <datalist id="txlist"></datalist>
+        </div>
+
+        <div class="field">
+          <label for="notes">Notas (opcional)</label>
+          <input type="text" id="notes" maxlength="300" placeholder="Ej.: tras caminar, en reposo, con café" autocomplete="off">
+        </div>
+
+        <p class="err" id="err" role="alert" hidden></p>
+        <button class="btn btn-primary" id="save" type="submit" disabled>Cargando…</button>
+        <p class="toast" id="toast" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="col-data" aria-label="Resumen e historial">
+      <p class="notice" id="notice" hidden></p>
+
+      <div class="panel" id="summary"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Evolución</h2>
+          <div class="filters" id="filters" role="group" aria-label="Filtrar por momento del día">
+            <button type="button" class="fchip" data-f="all" aria-pressed="true">Todas</button>
+            <button type="button" class="fchip" data-f="manana" aria-pressed="false">Mañana</button>
+            <button type="button" class="fchip" data-f="tarde" aria-pressed="false">Tarde</button>
+            <button type="button" class="fchip" data-f="noche" aria-pressed="false">Noche</button>
+          </div>
+        </div>
+        <div class="legend" id="legend">
+          <span><i class="sw s"></i>Sistólica</span>
+          <span><i class="sw d"></i>Diastólica</span>
+          <span><i class="sw r"></i>Referencia 140 y 90</span>
+        </div>
+        <div id="chart"></div>
+        <p class="empty" id="chart-empty" hidden>Con dos mediciones o más aparecerá aquí la gráfica.</p>
+      </div>
+
+      <div class="panel" id="export-panel" hidden>
+        <h2>Exportar a PDF</h2>
+        <div class="range">
+          <div class="field"><label for="exp-from">Desde (opcional)</label><input type="date" id="exp-from" autocomplete="off"></div>
+          <div class="field"><label for="exp-to">Hasta (opcional)</label><input type="date" id="exp-to" autocomplete="off"></div>
+        </div>
+        <div class="exp-btns">
+          <button type="button" class="btn btn-accent" id="pdf-person">PDF de la persona</button>
+          <button type="button" class="btn btn-ghost" id="pdf-all">PDF general de todas las personas</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="hist-head">
+          <h2>Historial</h2>
+          <span class="sub" id="hist-count"></span>
+        </div>
+        <div id="history"></div>
+      </div>
+    </section>
+  </div>
+
+  <p class="foot">Los colores son orientativos y usan los umbrales habituales de 130/85, 140/90 y 160/100 mmHg. No sustituyen la valoración de tu médico. Con 180/110 o más junto con dolor de pecho, dificultad para respirar, confusión o debilidad en un lado del cuerpo, llama al 112.</p>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var DEFAULT_ID = 'p-principal';
+  var MOMENTS = [
+    { id: 'manana', label: 'Mañana' },
+    { id: 'tarde', label: 'Tarde' },
+    { id: 'noche', label: 'Noche' }
+  ];
+  var ICONS = {
+    manana: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 12.5h12M4.5 12.5a3.5 3.5 0 0 1 7 0M8 3v2M3.2 5.7l1.4 1.4M12.8 5.7l-1.4 1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    tarde: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+    noche: '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function fmtISO(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function todayStr() { return fmtISO(new Date()); }
+  function daysAgoStr(n) { var d = new Date(); d.setDate(d.getDate() - n); return fmtISO(d); }
+  function parseDate(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function esDate(s) { var p = s.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function defaultMoment() { var h = new Date().getHours(); return h < 13 ? 'manana' : (h < 20 ? 'tarde' : 'noche'); }
+  function momentIndex(id) { for (var i = 0; i < MOMENTS.length; i++) if (MOMENTS[i].id === id) return i; return -1; }
+  function momentLabel(id) { var i = momentIndex(id); return i < 0 ? '' : MOMENTS[i].label; }
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+  var fmtDay = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  var fmtDayY = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  var fmtShort = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' });
+  function dayLabel(s) {
+    var d = parseDate(s);
+    var t = (d.getFullYear() === new Date().getFullYear() ? fmtDay : fmtDayY).format(d);
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+
+  function classify(s, d) {
+    if (s < 90 || d < 60) return { k: 'low', label: 'Baja' };
+    if (s >= 160 || d >= 100) return { k: 'crit', label: 'Muy alta' };
+    if (s >= 140 || d >= 90) return { k: 'high', label: 'Alta' };
+    if (s >= 130 || d >= 85) return { k: 'warn', label: 'Normal-alta' };
+    return { k: 'ok', label: 'Normal' };
+  }
+
+  function clean(id, raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var date = String(raw.date || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+    var mi = momentIndex(raw.moment);
+    if (mi < 0) return null;
+    var sys = Number(raw.sys), dia = Number(raw.dia);
+    if (!isFinite(sys) || !isFinite(dia)) return null;
+    var pulse = (raw.pulse == null || raw.pulse === '') ? null : Number(raw.pulse);
+    if (pulse !== null && !isFinite(pulse)) pulse = null;
+    return {
+      id: String(id), personId: String(raw.personId || DEFAULT_ID),
+      date: date, moment: MOMENTS[mi].id, mi: mi,
+      sys: Math.round(sys), dia: Math.round(dia),
+      pulse: pulse === null ? null : Math.round(pulse),
+      tx: !!raw.tx,
+      txName: String(raw.txName || '').slice(0, 120),
+      notes: String(raw.notes || '').slice(0, 300),
+      createdAt: Number(raw.createdAt) || 0
+    };
+  }
+  function cleanPerson(id, raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var name = String(raw.name || '').trim().slice(0, 40) || 'Sin nombre';
+    return { id: String(id), name: name, createdAt: Number(raw.createdAt) || 0 };
+  }
+  function desc(a, b) { return b.date.localeCompare(a.date) || (b.mi - a.mi) || (b.createdAt - a.createdAt); }
+  function asc(a, b) { return -desc(a, b); }
+
+  /* ---------- Almacenamiento ---------- */
+  function makeLocalStore() {
+    var KR = 'tension-arterial-v1', KP = 'tension-personas-v1';
+    var mem = [], ppl = [], cbR = null, cbP = null;
+    function load(k) { try { var v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+    function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+    mem = load(KR); ppl = load(KP);
+    function pushR() { if (cbR) cbR(mem.map(function (x) { return { id: x.id, data: x }; }), false); }
+    function pushP() { if (cbP) cbP(ppl.map(function (x) { return { id: x.id, data: x }; }), false); }
+    return {
+      kind: 'local',
+      subscribeReadings: function (fn) { cbR = fn; pushR(); },
+      subscribePeople: function (fn) { cbP = fn; pushP(); },
+      add: function (r) {
+        var prev = mem; mem = [r].concat(mem);
+        if (!save(KR, mem)) { mem = prev; return Promise.reject(new Error('local')); }
+        pushR(); return Promise.resolve();
+      },
+      remove: function (id) { mem = mem.filter(function (x) { return x.id !== id; }); save(KR, mem); pushR(); return Promise.resolve(); },
+      addPerson: function (p) {
+        var prev = ppl; ppl = ppl.filter(function (x) { return x.id !== p.id; }).concat([p]);
+        if (!save(KP, ppl)) { ppl = prev; return Promise.reject(new Error('local')); }
+        pushP(); return Promise.resolve();
+      },
+      renamePerson: function (id, name) {
+        ppl = ppl.map(function (x) { return x.id === id ? { id: x.id, name: name, createdAt: x.createdAt } : x; });
+        save(KP, ppl); pushP(); return Promise.resolve();
+      },
+      removePerson: function (id) { ppl = ppl.filter(function (x) { return x.id !== id; }); save(KP, ppl); pushP(); return Promise.resolve(); }
+    };
+  }
+  function makeDbStore(db, uid) {
+    var base = db.doc('data/users/' + uid + '/profile');
+    var colR = base.collection('readings'), colP = base.collection('people');
+    function sub(col) {
+      return function (fn, onErr) {
+        col.onSnapshot(function (snap) {
+          fn(snap.docs.map(function (d) { return { id: d.id, data: d.data() }; }), snap.metadata.fromCache);
+        }, onErr);
+      };
+    }
+    return {
+      kind: 'db',
+      subscribeReadings: sub(colR),
+      subscribePeople: sub(colP),
+      add: function (r) {
+        return colR.doc(r.id).set({
+          personId: r.personId, date: r.date, moment: r.moment, sys: r.sys, dia: r.dia, pulse: r.pulse,
+          tx: r.tx, txName: r.txName, notes: r.notes, createdAt: r.createdAt
+        });
+      },
+      remove: function (id) { return colR.doc(id).delete(); },
+      addPerson: function (p) { return colP.doc(p.id).set({ name: p.name, createdAt: p.createdAt }); },
+      renamePerson: function (id, name) { return colP.doc(id).update({ name: name }); },
+      removePerson: function (id) { return colP.doc(id).delete(); }
+    };
+  }
+
+  /* ---------- Estado ---------- */
+  var store = null, readings = [], people = [], activeId = null;
+  var loadedR = false, loadedP = false, confirmedR = false, confirmedP = false, creatingDefault = false;
+  var filter = 'all', confirmId = null, editId = null, delId = null;
+  var lastW = 0, toastTimer = null, loadTimer = null, dl = null;
+  var KACT = 'tension-persona-activa';
+
+  function ready() { return loadedR && loadedP; }
+  function activePerson() { for (var i = 0; i < people.length; i++) if (people[i].id === activeId) return people[i]; return null; }
+  function mine() { return readings.filter(function (r) { return r.personId === activeId; }); }
+  function visible() { return mine().filter(function (r) { return filter === 'all' || r.moment === filter; }); }
+  function avg(list, key) {
+    var n = 0, s = 0;
+    list.forEach(function (r) { if (r[key] != null) { s += r[key]; n++; } });
+    return n ? Math.round(s / n) : null;
+  }
+  function setActive(id) {
+    activeId = id;
+    try { localStorage.setItem(KACT, id); } catch (e) {}
+    confirmId = null;
+    renderAll();
+  }
+  function pickActive() {
+    if (activePerson()) return;
+    var saved = null;
+    try { saved = localStorage.getItem(KACT); } catch (e) {}
+    var found = people.filter(function (p) { return p.id === saved; })[0];
+    activeId = found ? found.id : (people.length ? people[0].id : null);
+  }
+
+  /* ---------- Render ---------- */
+  function cellHTML(label, list) {
+    var s = avg(list, 'sys'), d = avg(list, 'dia');
+    var v = s == null ? '—' : (s + '/' + d);
+    var sub = 'sin datos', cls = '';
+    if (s != null) {
+      var c = classify(s, d);
+      sub = c.label + ' · ' + plural(list.length, 'medición', 'mediciones');
+      cls = ' t-' + c.k;
+    }
+    return '<div class="cell"><div class="k">' + label + '</div><div class="v">' + v + '</div><div class="s' + cls + '">' + sub + '</div></div>';
+  }
+  function renderSummary() {
+    var cutoff = daysAgoStr(13);
+    var recent = mine().filter(function (r) { return r.date >= cutoff; });
+    var html = '<div class="panel-head"><h2>Medias</h2><p class="sub" id="sum-sub"></p></div><div class="sum-grid">';
+    MOMENTS.forEach(function (m) {
+      html += cellHTML(m.label, recent.filter(function (r) { return r.moment === m.id; }));
+    });
+    html += '</div><div class="sum-grid two">';
+    html += cellHTML('Con tratamiento', recent.filter(function (r) { return r.tx; }));
+    html += cellHTML('Sin tratamiento', recent.filter(function (r) { return !r.tx; }));
+    html += '</div>';
+    $('summary').innerHTML = html;
+    var p = activePerson();
+    $('sum-sub').textContent = (p ? p.name + ' · ' : '') + 'Últimos 14 días · ' + plural(recent.length, 'medición', 'mediciones');
+  }
+
+  function renderTxList() {
+    var seen = {}, count = 0, dl2 = $('txlist');
+    dl2.textContent = '';
+    mine().forEach(function (r) {
+      var n = r.txName.trim();
+      if (n && !seen[n.toLowerCase()] && count < 20) {
+        seen[n.toLowerCase()] = 1; count++;
+        var o = document.createElement('option'); o.value = n; dl2.appendChild(o);
+      }
+    });
+  }
+
+  function renderChart() {
+    var list = visible().slice().sort(asc).slice(-30);
+    var host = $('chart');
+    if (list.length < 2) {
+      host.textContent = '';
+      host.hidden = true; $('legend').hidden = true; $('chart-empty').hidden = false;
+      return;
+    }
+    host.hidden = false; $('legend').hidden = false; $('chart-empty').hidden = true;
+    var w = Math.floor(host.clientWidth);
+    if (!w) return;
+    lastW = w;
+    var H = 210, L = 34, R = 10, T = 10, B = 26, iw = w - L - R, ih = H - T - B;
+    var lo = Infinity, hi = -Infinity;
+    list.forEach(function (r) { lo = Math.min(lo, r.dia); hi = Math.max(hi, r.sys); });
+    lo = Math.min(lo, 80); hi = Math.max(hi, 150);
+    lo = Math.floor((lo - 6) / 10) * 10; hi = Math.ceil((hi + 6) / 10) * 10;
+    function X(i) { return L + i * iw / (list.length - 1); }
+    function Y(v) { return T + ih - (v - lo) / (hi - lo) * ih; }
+    function f(n) { return Math.round(n * 10) / 10; }
+
+    var s = '<svg viewBox="0 0 ' + w + ' ' + H + '" width="' + w + '" height="' + H + '" role="img" aria-label="Gráfica de sistólica y diastólica de las últimas ' + list.length + ' mediciones">';
+    for (var t = Math.ceil(lo / 20) * 20; t <= hi; t += 20) {
+      s += '<line class="grid-l" x1="' + L + '" x2="' + (w - R) + '" y1="' + f(Y(t)) + '" y2="' + f(Y(t)) + '"/>';
+      s += '<text class="ax" x="' + (L - 6) + '" y="' + f(Y(t) + 4) + '" text-anchor="end">' + t + '</text>';
+    }
+    s += '<line class="ref-s" x1="' + L + '" x2="' + (w - R) + '" y1="' + f(Y(140)) + '" y2="' + f(Y(140)) + '"/>';
+    s += '<line class="ref-d" x1="' + L + '" x2="' + (w - R) + '" y1="' + f(Y(90)) + '" y2="' + f(Y(90)) + '"/>';
+    [['s', 'sys'], ['d', 'dia']].forEach(function (p) {
+      var pts = list.map(function (r, i) { return f(X(i)) + ',' + f(Y(r[p[1]])); }).join(' ');
+      s += '<polyline class="ln-' + p[0] + '" points="' + pts + '"/>';
+      list.forEach(function (r, i) {
+        var last = i === list.length - 1;
+        s += '<circle class="pt-' + p[0] + (last ? ' last' : '') + '" cx="' + f(X(i)) + '" cy="' + f(Y(r[p[1]])) + '" r="' + (last ? 4.5 : 3) + '"><title>' +
+          fmtShort.format(parseDate(r.date)) + ' · ' + momentLabel(r.moment) + ': ' + r.sys + '/' + r.dia + '</title></circle>';
+      });
+    });
+    var yb = H - 6;
+    s += '<text class="ax" x="' + L + '" y="' + yb + '" text-anchor="start">' + fmtShort.format(parseDate(list[0].date)) + '</text>';
+    if (list.length >= 7) {
+      var mid = Math.floor((list.length - 1) / 2);
+      s += '<text class="ax" x="' + f(X(mid)) + '" y="' + yb + '" text-anchor="middle">' + fmtShort.format(parseDate(list[mid].date)) + '</text>';
+    }
+    s += '<text class="ax" x="' + (w - R) + '" y="' + yb + '" text-anchor="end">' + fmtShort.format(parseDate(list[list.length - 1].date)) + '</text>';
+    s += '</svg>';
+    host.innerHTML = s;
+  }
+
+  function rowEl(r) {
+    var li = el('li', 'row');
+    var main = el('div', 'row-main');
+    var chip = el('span', 'chip');
+    chip.innerHTML = ICONS[r.moment];
+    chip.appendChild(el('span', null, momentLabel(r.moment)));
+    main.appendChild(chip);
+    var bp = el('span', 'bp');
+    bp.appendChild(el('b', null, String(r.sys)));
+    bp.appendChild(document.createTextNode('/'));
+    bp.appendChild(el('b', null, String(r.dia)));
+    bp.appendChild(el('small', null, 'mmHg'));
+    main.appendChild(bp);
+    var c = classify(r.sys, r.dia);
+    main.appendChild(el('span', 'pill p-' + c.k, c.label));
+    li.appendChild(main);
+
+    var meta = el('div', 'row-meta');
+    if (r.pulse != null) meta.appendChild(el('span', null, r.pulse + ' lpm'));
+    meta.appendChild(el('span', 'tx ' + (r.tx ? 'tx-yes' : 'tx-no'),
+      r.tx ? ('Tratamiento' + (r.txName ? ': ' + r.txName : '')) : 'Sin tratamiento'));
+    li.appendChild(meta);
+    if (r.notes) li.appendChild(el('p', 'note', r.notes));
+
+    var act = el('div', 'row-act');
+    if (confirmId === r.id) {
+      act.appendChild(el('span', null, '¿Borrar?'));
+      var yes = el('button', 'btn btn-sm btn-danger', 'Sí'); yes.type = 'button'; yes.setAttribute('data-del', r.id);
+      var no = el('button', 'btn btn-sm btn-ghost', 'No'); no.type = 'button'; no.setAttribute('data-no', '1');
+      act.appendChild(yes); act.appendChild(no);
+    } else {
+      var b = el('button', 'link-btn', 'Borrar'); b.type = 'button'; b.setAttribute('data-ask', r.id);
+      b.setAttribute('aria-label', 'Borrar la medición de ' + dayLabel(r.date) + ', ' + momentLabel(r.moment));
+      act.appendChild(b);
+    }
+    li.appendChild(act);
+    return li;
+  }
+
+  function renderHistory() {
+    var host = $('history');
+    host.textContent = '';
+    var all = mine();
+    var list = visible().slice().sort(desc);
+    $('hist-count').textContent = ready() ? plural(list.length, 'medición', 'mediciones') : '';
+    if (!ready() || !activeId) { host.appendChild(el('p', 'empty', 'Cargando tus mediciones…')); return; }
+    if (!all.length) {
+      host.appendChild(el('p', 'empty', 'Todavía no hay mediciones de ' + activePerson().name + '. Rellena el formulario para añadir la primera y aquí verás cada día por separado.'));
+      return;
+    }
+    if (!list.length) { host.appendChild(el('p', 'empty', 'No hay mediciones de este momento del día.')); return; }
+    var cur = null, ul = null;
+    list.forEach(function (r) {
+      if (!cur || cur !== r.date) {
+        cur = r.date;
+        var sec = el('section', 'day');
+        sec.appendChild(el('h3', 'day-h', dayLabel(r.date)));
+        ul = el('ul', 'rows');
+        sec.appendChild(ul);
+        host.appendChild(sec);
+      }
+      ul.appendChild(rowEl(r));
+    });
+    var no = host.querySelector('[data-no]');
+    if (no) no.focus();
+  }
+
+  function renderPeople() {
+    var host = $('pchips');
+    host.textContent = '';
+    people.forEach(function (p) {
+      var b = el('button', 'fchip', p.name);
+      b.type = 'button'; b.setAttribute('data-p', p.id);
+      b.setAttribute('aria-pressed', p.id === activeId ? 'true' : 'false');
+      host.appendChild(b);
+    });
+    var ap = activePerson();
+    $('for-person').textContent = ap ? 'Para ' + ap.name : '';
+    $('pdf-person').textContent = ap ? 'PDF de ' + ap.name : 'PDF de la persona';
+    $('pdf-person').disabled = !ap;
+    $('pdf-all').disabled = !people.length;
+    renderManage();
+  }
+
+  function renderManage() {
+    var box = $('pmanage');
+    if (box.hidden) return;
+    box.textContent = '';
+    var ul = el('ul', 'plist');
+    people.forEach(function (p) {
+      var n = readings.filter(function (r) { return r.personId === p.id; }).length;
+      var li = el('li', 'prow');
+      if (editId === p.id) {
+        var f = el('form', 'pedit'); f.setAttribute('data-edit', p.id); f.noValidate = true;
+        var inp = el('input'); inp.type = 'text'; inp.maxLength = 40; inp.value = p.name; inp.id = 'pedit-input';
+        inp.setAttribute('aria-label', 'Nuevo nombre');
+        var ok = el('button', 'btn btn-sm btn-accent', 'Guardar'); ok.type = 'submit';
+        var cx = el('button', 'btn btn-sm btn-ghost', 'Cancelar'); cx.type = 'button'; cx.setAttribute('data-pcancel', '1');
+        f.appendChild(inp); f.appendChild(ok); f.appendChild(cx);
+        li.appendChild(f);
+      } else if (delId === p.id) {
+        li.appendChild(el('span', 'pn', '¿Borrar a ' + p.name + (n ? ' y sus ' + plural(n, 'medición', 'mediciones') : '') + '?'));
+        var y = el('button', 'btn btn-sm btn-danger', 'Sí, borrar'); y.type = 'button'; y.setAttribute('data-pdel', p.id);
+        var no = el('button', 'btn btn-sm btn-ghost', 'No'); no.type = 'button'; no.setAttribute('data-pno', '1');
+        li.appendChild(y); li.appendChild(no);
+      } else {
+        li.appendChild(el('span', 'pn', p.name));
+        li.appendChild(el('span', 'pc', plural(n, 'medición', 'mediciones')));
+        var ed = el('button', 'btn btn-sm btn-ghost', 'Renombrar'); ed.type = 'button'; ed.setAttribute('data-pedit', p.id);
+        var de = el('button', 'btn btn-sm btn-ghost', 'Borrar'); de.type = 'button'; de.setAttribute('data-pask', p.id);
+        if (people.length < 2) { de.disabled = true; de.title = 'Debe quedar al menos una persona.'; }
+        li.appendChild(ed); li.appendChild(de);
+      }
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    var inp2 = $('pedit-input');
+    if (inp2) { inp2.focus(); inp2.select(); }
+  }
+
+  function renderAll() { renderPeople(); renderSummary(); renderTxList(); renderChart(); renderHistory(); }
+
+  function notice(msg) {
+    var n = $('notice');
+    if (msg) { n.textContent = msg; n.hidden = false; } else { n.hidden = true; n.textContent = ''; }
+  }
+  function toast(msg) {
+    $('toast').textContent = msg;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { $('toast').textContent = ''; }, 4500);
+  }
+  function showErr(msg) {
+    var e = $('err');
+    if (msg) { e.textContent = msg; e.hidden = false; } else { e.hidden = true; e.textContent = ''; }
+  }
+
+  /* ---------- Formulario de medición ---------- */
+  function checked(name) {
+    var r = document.querySelector('input[name="' + name + '"]:checked');
+    return r ? r.value : '';
+  }
+  function num(id) { var v = $(id).value.trim(); return v === '' ? NaN : Number(v); }
+
+  function onSubmit(ev) {
+    ev.preventDefault();
+    if (!store || !activeId) { showErr('Un momento, se están cargando tus datos.'); return; }
+    var date = $('date').value, moment = checked('moment');
+    var sys = num('sys'), dia = num('dia'), pulseRaw = $('pulse').value.trim(), pulse = pulseRaw === '' ? null : Number(pulseRaw);
+    var msg = '';
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) msg = 'Indica la fecha.';
+    else if (date > todayStr()) msg = 'La fecha no puede ser futura.';
+    else if (!moment) msg = 'Elige el momento del día.';
+    else if (!isFinite(sys) || sys < 60 || sys > 250) msg = 'La sistólica (el número alto) debe estar entre 60 y 250.';
+    else if (!isFinite(dia) || dia < 30 || dia > 150) msg = 'La diastólica (el número bajo) debe estar entre 30 y 150.';
+    else if (sys <= dia) msg = 'La sistólica debe ser mayor que la diastólica.';
+    else if (pulse !== null && (!isFinite(pulse) || pulse < 30 || pulse > 220)) msg = 'El pulso debe estar entre 30 y 220 lpm, o dejarse en blanco.';
+    if (msg) { showErr(msg); return; }
+    showErr('');
+
+    var tx = checked('tx') === 'si';
+    var entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      personId: activeId,
+      date: date, moment: moment, sys: Math.round(sys), dia: Math.round(dia),
+      pulse: pulse === null ? null : Math.round(pulse),
+      tx: tx, txName: tx ? $('txname').value.trim().slice(0, 120) : '',
+      notes: $('notes').value.trim().slice(0, 300),
+      createdAt: Date.now()
+    };
+    var btn = $('save');
+    btn.disabled = true;
+    store.add(entry).then(function () {
+      toast('Guardado para ' + activePerson().name + ': ' + entry.sys + '/' + entry.dia + ' · ' + momentLabel(entry.moment));
+      $('sys').value = ''; $('dia').value = ''; $('pulse').value = ''; $('notes').value = '';
+      $('sys').focus();
+    }).catch(function () {
+      showErr('No se pudo guardar la medición. Inténtalo de nuevo.');
+    }).then(function () { btn.disabled = false; });
+  }
+
+  function syncTx() { $('txname-wrap').hidden = checked('tx') !== 'si'; }
+
+  /* ---------- Personas: acciones ---------- */
+  function toggleBox(id, btnId, show) {
+    var box = $(id);
+    box.hidden = show === undefined ? !box.hidden : !show;
+    $(btnId).setAttribute('aria-expanded', box.hidden ? 'false' : 'true');
+    return !box.hidden;
+  }
+  function onAddPerson(ev) {
+    ev.preventDefault();
+    var name = $('pname').value.trim().slice(0, 40);
+    if (!name) { toast('Escribe el nombre de la persona.'); $('pname').focus(); return; }
+    if (!store) return;
+    var p = { id: 'p-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name, createdAt: Date.now() };
+    store.addPerson(p).then(function () {
+      $('pname').value = '';
+      toggleBox('pform', 'add-person', false);
+      activeId = p.id; setActive(p.id);
+      toast('Persona añadida: ' + name);
+    }).catch(function () { toast('No se pudo añadir la persona.'); });
+  }
+  function onRename(id, name) {
+    name = name.trim().slice(0, 40);
+    if (!name) { toast('El nombre no puede quedar vacío.'); return; }
+    store.renamePerson(id, name).then(function () { editId = null; renderManage(); })
+      .catch(function () { toast('No se pudo cambiar el nombre.'); });
+  }
+  function deletePerson(id) {
+    var ids = readings.filter(function (r) { return r.personId === id; }).map(function (r) { return r.id; });
+    var chain = Promise.resolve();
+    ids.forEach(function (rid) { chain = chain.then(function () { return store.remove(rid); }); });
+    chain.then(function () { return store.removePerson(id); })
+      .then(function () { toast('Persona borrada.'); })
+      .catch(function () { toast('No se pudo borrar a la persona. Inténtalo de nuevo.'); });
+  }
+
+  /* ---------- PDF ---------- */
+  var PW = 210, PH = 297, M = 15;
+  var COL = {
+    fg: [19, 32, 44], muted: [88, 106, 124], line: [213, 222, 231], head: [238, 243, 247],
+    sys: [11, 103, 168], dia: [122, 79, 224],
+    ok: [17, 107, 51], warn: [138, 90, 0], high: [168, 64, 12], crit: [166, 27, 27], low: [11, 92, 138]
+  };
+  function latin(s) { return String(s == null ? '' : s).replace(/[^ -~ -ÿ]/g, '?'); }
+  function tc(d, c) { d.setTextColor(c[0], c[1], c[2]); }
+  function dc(d, c) { d.setDrawColor(c[0], c[1], c[2]); }
+  function fc(d, c) { d.setFillColor(c[0], c[1], c[2]); }
+  function slug(s) {
+    var t = String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return t || 'persona';
+  }
+  function newPdf() {
+    var J = window.jspdf && window.jspdf.jsPDF;
+    if (!J) return null;
+    var d = new J({ unit: 'mm', format: 'a4' });
+    d.setLineHeightFactor(1.2);
+    return d;
+  }
+  function ensure(ctx, h) {
+    if (ctx.y + h > PH - 20) { ctx.doc.addPage(); ctx.y = M; return true; }
+    return false;
+  }
+  function pdfTitle(ctx, title, lines) {
+    var d = ctx.doc;
+    d.setFont('helvetica', 'bold'); d.setFontSize(18); tc(d, COL.fg);
+    d.text(latin(title), M, M + 8);
+    var y = M + 16;
+    lines.forEach(function (l, i) {
+      d.setFont('helvetica', i === 0 ? 'bold' : 'normal');
+      d.setFontSize(i === 0 ? 13 : 9.5);
+      tc(d, i === 0 ? COL.fg : COL.muted);
+      d.text(latin(l), M, y);
+      y += i === 0 ? 6.5 : 5;
+    });
+    ctx.y = y + 4;
+  }
+  function pdfH(ctx, text) {
+    ensure(ctx, 16);
+    var d = ctx.doc;
+    d.setFont('helvetica', 'bold'); d.setFontSize(11.5); tc(d, COL.fg);
+    d.text(latin(text), M, ctx.y + 4);
+    ctx.y += 8;
+  }
+  function pdfText(ctx, text) {
+    ensure(ctx, 8);
+    var d = ctx.doc;
+    d.setFont('helvetica', 'normal'); d.setFontSize(9); tc(d, COL.muted);
+    d.text(latin(text), M, ctx.y + 3.5);
+    ctx.y += 6;
+  }
+  function pdfTable(ctx, cols, rows) {
+    var d = ctx.doc, total = 0;
+    cols.forEach(function (c) { total += c.w; });
+    function head() {
+      fc(d, COL.head); d.rect(M, ctx.y, total, 7, 'F');
+      d.setFont('helvetica', 'bold'); d.setFontSize(8.5); tc(d, COL.fg);
+      var x = M;
+      cols.forEach(function (c) { d.text(latin(c.h), x + 1.5, ctx.y + 4.8); x += c.w; });
+      ctx.y += 7;
+    }
+    ensure(ctx, 7 + 9);
+    head();
+    rows.forEach(function (r) {
+      d.setFont('helvetica', 'normal'); d.setFontSize(8.5);
+      var lines = r.cells.map(function (t, i) { return d.splitTextToSize(latin(t), cols[i].w - 3); });
+      var n = Math.max.apply(null, lines.map(function (l) { return l.length; }));
+      var h = Math.max(1, n) * 3.7 + 3.4;
+      if (ensure(ctx, h)) head();
+      var x = M;
+      lines.forEach(function (ls, i) {
+        var colr = COL.fg, bold = false;
+        if (cols[i].level && r.level) { colr = COL[r.level]; bold = true; }
+        d.setFont('helvetica', bold ? 'bold' : 'normal'); d.setFontSize(8.5); tc(d, colr);
+        d.text(ls, x + 1.5, ctx.y + 4.6);
+        x += cols[i].w;
+      });
+      dc(d, COL.line); d.setLineWidth(0.2);
+      d.line(M, ctx.y + h, M + total, ctx.y + h);
+      ctx.y += h;
+    });
+  }
+  function pdfChart(ctx, list) {
+    if (list.length < 2) return;
+    var d = ctx.doc, h = 58;
+    ensure(ctx, h + 6);
+    d.setFont('helvetica', 'bold'); d.setFontSize(11.5); tc(d, COL.fg);
+    d.text('Evolución', M, ctx.y + 4);
+    // leyenda
+    var lx = PW - M - 62;
+    d.setLineWidth(0.6);
+    dc(d, COL.sys); d.line(lx, ctx.y + 3.2, lx + 6, ctx.y + 3.2);
+    d.setFont('helvetica', 'normal'); d.setFontSize(8); tc(d, COL.muted); d.text('Sistólica', lx + 8, ctx.y + 4);
+    dc(d, COL.dia); d.line(lx + 28, ctx.y + 3.2, lx + 34, ctx.y + 3.2);
+    d.text('Diastólica', lx + 36, ctx.y + 4);
+    var top = ctx.y + 10, L = M + 9, R = PW - M, ih = h - 18;
+    var lo = Infinity, hi = -Infinity;
+    list.forEach(function (r) { lo = Math.min(lo, r.dia); hi = Math.max(hi, r.sys); });
+    lo = Math.min(lo, 80); hi = Math.max(hi, 150);
+    lo = Math.floor((lo - 6) / 10) * 10; hi = Math.ceil((hi + 6) / 10) * 10;
+    function X(i) { return L + i * (R - L) / (list.length - 1); }
+    function Y(v) { return top + ih - (v - lo) / (hi - lo) * ih; }
+    d.setLineWidth(0.15); d.setFontSize(7); tc(d, COL.muted); d.setFont('helvetica', 'normal');
+    for (var t = Math.ceil(lo / 20) * 20; t <= hi; t += 20) {
+      dc(d, COL.line); d.line(L, Y(t), R, Y(t));
+      d.text(String(t), L - 1.5, Y(t) + 0.9, { align: 'right' });
+    }
+    d.setLineWidth(0.2);
+    d.setLineDash([1.2, 1.2], 0);
+    dc(d, COL.sys); d.line(L, Y(140), R, Y(140));
+    dc(d, COL.dia); d.line(L, Y(90), R, Y(90));
+    d.setLineDash([], 0);
+    [['sys', COL.sys], ['dia', COL.dia]].forEach(function (s) {
+      d.setLineWidth(0.5); dc(d, s[1]); fc(d, s[1]);
+      list.forEach(function (r, i) { if (i) d.line(X(i - 1), Y(list[i - 1][s[0]]), X(i), Y(r[s[0]])); });
+      list.forEach(function (r, i) { d.circle(X(i), Y(r[s[0]]), 0.7, 'F'); });
+    });
+    d.setFontSize(7); tc(d, COL.muted);
+    d.text(esDate(list[0].date), L, top + ih + 5);
+    d.text(esDate(list[list.length - 1].date), R, top + ih + 5, { align: 'right' });
+    ctx.y = top + ih + 10;
+  }
+  function pdfFooters(doc) {
+    var n = doc.getNumberOfPages();
+    for (var i = 1; i <= n; i++) {
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); tc(doc, COL.muted);
+      doc.text('Registro personal. Los niveles son orientativos y no sustituyen la valoración médica.', M, PH - 10);
+      doc.text('Página ' + i + ' de ' + n, PW - M, PH - 10, { align: 'right' });
+    }
+  }
+
+  var SUM_COLS = [{ h: 'Grupo', w: 50 }, { h: 'Mediciones', w: 28 }, { h: 'Media', w: 40 }, { h: 'Pulso medio', w: 30 }, { h: 'Nivel', w: 32, level: true }];
+  var ROW_COLS = [{ h: 'Fecha', w: 22 }, { h: 'Momento', w: 20 }, { h: 'Tensión', w: 22 }, { h: 'Pulso', w: 15 }, { h: 'Nivel', w: 24, level: true }, { h: 'Tratamiento y notas', w: 77 }];
+  var ALL_COLS = [{ h: 'Persona', w: 60 }, { h: 'Mediciones', w: 28 }, { h: 'Media', w: 36 }, { h: 'Pulso medio', w: 28 }, { h: 'Última', w: 28 }];
+
+  function statRow(label, list) {
+    var s = avg(list, 'sys'), d = avg(list, 'dia'), p = avg(list, 'pulse');
+    if (s == null) return { cells: [label, '0', '-', '-', '-'] };
+    var c = classify(s, d);
+    return { cells: [label, String(list.length), s + '/' + d + ' mmHg', p == null ? '-' : p + ' lpm', c.label], level: c.k };
+  }
+  function summaryRows(list) {
+    var rows = [statRow('Total', list)];
+    MOMENTS.forEach(function (m) { rows.push(statRow(m.label, list.filter(function (r) { return r.moment === m.id; }))); });
+    rows.push(statRow('Con tratamiento', list.filter(function (r) { return r.tx; })));
+    rows.push(statRow('Sin tratamiento', list.filter(function (r) { return !r.tx; })));
+    return rows;
+  }
+  function listRows(list) {
+    return list.map(function (r) {
+      var c = classify(r.sys, r.dia);
+      var tx = r.tx ? ('Tratamiento' + (r.txName ? ': ' + r.txName : '')) : 'Sin tratamiento';
+      return {
+        cells: [esDate(r.date), momentLabel(r.moment), r.sys + '/' + r.dia, r.pulse == null ? '-' : String(r.pulse), c.label, tx + (r.notes ? '\nNotas: ' + r.notes : '')],
+        level: c.k
+      };
+    });
+  }
+  function getRange() { return { from: $('exp-from').value || '', to: $('exp-to').value || '' }; }
+  function inRange(r, rg) { return (!rg.from || r.date >= rg.from) && (!rg.to || r.date <= rg.to); }
+  function periodText(list, rg) {
+    if (rg.from || rg.to) return 'Periodo: ' + (rg.from ? esDate(rg.from) : 'inicio') + ' a ' + (rg.to ? esDate(rg.to) : 'hoy');
+    var s = list.slice().sort(asc);
+    return 'Periodo: ' + esDate(s[0].date) + ' a ' + esDate(s[s.length - 1].date);
+  }
+  function rangeOk(rg) {
+    if (rg.from && rg.to && rg.from > rg.to) { toast('La fecha «desde» es posterior a «hasta».'); return false; }
+    return true;
+  }
+  function savePdf(doc, filename) {
+    if (!dl) { toast('La descarga no está disponible en este momento.'); return; }
+    dl.save({ filename: filename, data: doc.output('blob') }).then(function () {
+      toast('PDF guardado.');
+    }).catch(function (e) {
+      if (e && e.code === 'declined') return;
+      toast('No se pudo descargar el PDF.');
+    });
+  }
+
+  function exportPerson() {
+    var p = activePerson();
+    if (!p) return;
+    var rg = getRange();
+    if (!rangeOk(rg)) return;
+    var list = mine().filter(function (r) { return inRange(r, rg); });
+    if (!list.length) { toast('No hay mediciones de ' + p.name + ' en ese periodo.'); return; }
+    var doc = newPdf();
+    if (!doc) { toast('No se pudo preparar el PDF.'); return; }
+    var ctx = { doc: doc, y: M };
+    pdfTitle(ctx, 'Registro de tensión arterial', [p.name, periodText(list, rg), plural(list.length, 'medición', 'mediciones') + ' · Generado el ' + esDate(todayStr())]);
+    pdfH(ctx, 'Resumen');
+    pdfTable(ctx, SUM_COLS, summaryRows(list));
+    ctx.y += 7;
+    pdfChart(ctx, list.slice().sort(asc).slice(-60));
+    pdfH(ctx, 'Mediciones');
+    pdfTable(ctx, ROW_COLS, listRows(list.slice().sort(desc)));
+    pdfFooters(doc);
+    savePdf(doc, 'tension-' + slug(p.name) + '.pdf');
+  }
+
+  function exportAll() {
+    if (!people.length) return;
+    var rg = getRange();
+    if (!rangeOk(rg)) return;
+    var inR = readings.filter(function (r) { return inRange(r, rg); });
+    var byPerson = people.map(function (p) {
+      return { p: p, list: inR.filter(function (r) { return r.personId === p.id; }) };
+    });
+    var withData = byPerson.filter(function (x) { return x.list.length; });
+    if (!withData.length) { toast('No hay mediciones en ese periodo.'); return; }
+    var doc = newPdf();
+    if (!doc) { toast('No se pudo preparar el PDF.'); return; }
+    var ctx = { doc: doc, y: M };
+    pdfTitle(ctx, 'Registro de tensión arterial', ['Informe general', periodText(inR, rg),
+      plural(withData.length, 'persona', 'personas') + ' · ' + plural(inR.length, 'medición', 'mediciones') + ' · Generado el ' + esDate(todayStr())]);
+    pdfH(ctx, 'Resumen por persona');
+    var rows = byPerson.map(function (x) {
+      var s = avg(x.list, 'sys'), d = avg(x.list, 'dia'), pu = avg(x.list, 'pulse');
+      if (s == null) return { cells: [x.p.name, '0', '-', '-', '-'] };
+      var last = x.list.slice().sort(desc)[0];
+      return { cells: [x.p.name, String(x.list.length), s + '/' + d + ' mmHg', pu == null ? '-' : pu + ' lpm', esDate(last.date)] };
+    });
+    pdfTable(ctx, ALL_COLS, rows);
+    ctx.y += 7;
+    withData.forEach(function (x, i) {
+      if (i > 0) { ctx.doc.addPage(); ctx.y = M; }
+      pdfH(ctx, x.p.name);
+      pdfText(ctx, plural(x.list.length, 'medición', 'mediciones') + ' · ' + periodText(x.list, { from: '', to: '' }).replace('Periodo: ', ''));
+      pdfTable(ctx, SUM_COLS, summaryRows(x.list));
+      ctx.y += 7;
+      pdfChart(ctx, x.list.slice().sort(asc).slice(-60));
+      pdfH(ctx, 'Mediciones');
+      pdfTable(ctx, ROW_COLS, listRows(x.list.slice().sort(desc)));
+    });
+    pdfFooters(doc);
+    savePdf(doc, 'tension-general.pdf');
+  }
+
+  /* ---------- Arranque ---------- */
+  function startStore(s, localNote) {
+    store = s;
+    if (localNote) notice('Tus datos se guardan solo en este navegador y pueden perderse si borras los datos del sitio.');
+    $('save').disabled = false; $('save').textContent = 'Guardar medición';
+    loadTimer = setTimeout(function () {
+      if (!(confirmedR && confirmedP)) notice('No se han podido comprobar tus datos todavía. Lo que ves puede no estar al día.');
+    }, 10000);
+    function checkConfirmed() {
+      if (confirmedR && confirmedP) { clearTimeout(loadTimer); if (store.kind === 'db') notice(''); }
+    }
+    var onErr = function () { notice('No se pudieron leer tus datos. Recarga la página para intentarlo de nuevo.'); };
+
+    s.subscribeReadings(function (rows, fromCache) {
+      readings = rows.map(function (x) { return clean(x.id, x.data); }).filter(Boolean);
+      if (!fromCache) { confirmedR = true; loadedR = true; } else if (rows.length) { loadedR = true; }
+      checkConfirmed();
+      if (confirmId && !readings.some(function (r) { return r.id === confirmId; })) confirmId = null;
+      renderAll();
+    }, onErr);
+
+    s.subscribePeople(function (rows, fromCache) {
+      people = rows.map(function (x) { return cleanPerson(x.id, x.data); }).filter(Boolean)
+        .sort(function (a, b) { return (a.createdAt - b.createdAt) || a.name.localeCompare(b.name, 'es'); });
+      if (!fromCache) { confirmedP = true; loadedP = true; } else if (rows.length) { loadedP = true; }
+      checkConfirmed();
+      if (confirmedP && !rows.length && !creatingDefault) {
+        creatingDefault = true;
+        s.addPerson({ id: DEFAULT_ID, name: 'Yo', createdAt: Date.now() }).catch(function () {}).then(function () { creatingDefault = false; });
+      }
+      pickActive();
+      if (editId && !people.some(function (p) { return p.id === editId; })) editId = null;
+      if (delId && !people.some(function (p) { return p.id === delId; })) delId = null;
+      renderAll();
+    }, onErr);
+  }
+
+  function init() {
+    var today = todayStr();
+    $('date').value = today; $('date').max = today;
+    MOMENTS.forEach(function (m) { $('lb-' + m.id).insertAdjacentHTML('afterbegin', ICONS[m.id]); });
+    $('mo-' + defaultMoment()).checked = true;
+    syncTx();
+    renderAll();
+
+    $('f').addEventListener('submit', onSubmit);
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="tx"]'), function (r) { r.addEventListener('change', syncTx); });
+    $('filters').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-f]');
+      if (!b) return;
+      filter = b.getAttribute('data-f');
+      Array.prototype.forEach.call(document.querySelectorAll('.fchip[data-f]'), function (c) {
+        c.setAttribute('aria-pressed', c === b ? 'true' : 'false');
+      });
+      renderChart(); renderHistory();
+    });
+    $('history').addEventListener('click', function (ev) {
+      var t = ev.target.closest('button');
+      if (!t) return;
+      if (t.hasAttribute('data-ask')) { confirmId = t.getAttribute('data-ask'); renderHistory(); }
+      else if (t.hasAttribute('data-no')) { confirmId = null; renderHistory(); }
+      else if (t.hasAttribute('data-del')) {
+        var id = t.getAttribute('data-del');
+        confirmId = null;
+        if (store) store.remove(id).catch(function () { toast('No se pudo borrar la medición.'); });
+      }
+    });
+
+    $('pchips').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-p]');
+      if (b) setActive(b.getAttribute('data-p'));
+    });
+    $('add-person').addEventListener('click', function () {
+      var open = toggleBox('pform', 'add-person');
+      if (open) $('pname').focus();
+    });
+    $('pform-cancel').addEventListener('click', function () { toggleBox('pform', 'add-person', false); });
+    $('pform').addEventListener('submit', onAddPerson);
+    $('manage').addEventListener('click', function () {
+      toggleBox('pmanage', 'manage'); editId = null; delId = null; renderManage();
+    });
+    $('pmanage').addEventListener('click', function (ev) {
+      var t = ev.target.closest('button');
+      if (!t) return;
+      if (t.hasAttribute('data-pedit')) { editId = t.getAttribute('data-pedit'); delId = null; renderManage(); }
+      else if (t.hasAttribute('data-pcancel')) { editId = null; renderManage(); }
+      else if (t.hasAttribute('data-pask')) { delId = t.getAttribute('data-pask'); editId = null; renderManage(); }
+      else if (t.hasAttribute('data-pno')) { delId = null; renderManage(); }
+      else if (t.hasAttribute('data-pdel')) {
+        var id = t.getAttribute('data-pdel');
+        delId = null;
+        if (store) deletePerson(id);
+      }
+    });
+    $('pmanage').addEventListener('submit', function (ev) {
+      var f = ev.target.closest('form[data-edit]');
+      if (!f) return;
+      ev.preventDefault();
+      if (store) onRename(f.getAttribute('data-edit'), f.querySelector('input').value);
+    });
+
+    $('pdf-person').addEventListener('click', exportPerson);
+    $('pdf-all').addEventListener('click', exportAll);
+
+    if (window.ResizeObserver) {
+      new ResizeObserver(function () {
+        var w = Math.floor($('chart').clientWidth);
+        if (w && w !== lastW) renderChart();
+      }).observe($('chart'));
+    }
+
+    var c = window.claude;
+    if (!c || !c.use) { startStore(makeLocalStore(), true); return; }
+    c.use('downloads').then(function (d) {
+      dl = d || null;
+      $('export-panel').hidden = !(dl && window.jspdf);
+    }).catch(function () {});
+    Promise.all([c.use('user'), c.use('db')]).then(function (r) {
+      if (!r[0] || !r[1]) return null;
+      return r[0].id().then(function (uid) { return uid ? { db: r[1], uid: uid } : null; });
+    }).catch(function () { return null; }).then(function (x) {
+      if (x) startStore(makeDbStore(x.db, x.uid), false);
+      else startStore(makeLocalStore(), true);
+    });
+  }
+  init();
+})();
+</script>
+
+</body></html>
